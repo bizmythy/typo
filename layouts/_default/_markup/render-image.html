@@ -42,12 +42,41 @@ and build the img class string as "img-tag1 img-tag2 ..."
 {{ $classes = printf "%s img-%s" $classes $tag}}
 {{ end }}
 
+{{/* Extract SVG dimensions if it's an SVG */}}
+{{ $svgWidth := "" }}
+{{ $svgHeight := "" }}
+{{ with $imgResource }}
+  {{ if eq .MediaType.SubType "svg" }}
+    {{ $content := .Content }}
+    {{ $viewBoxRegex := `viewBox="[^"]*\s+([0-9.]+)\s+([0-9.]+)"` }}
+    {{ $widthRegex := `width="([0-9.]+)"` }}
+    {{ $heightRegex := `height="([0-9.]+)"` }}
+
+    {{ if findRE $viewBoxRegex $content }}
+      {{ $viewBoxMatch := index (findRE $viewBoxRegex $content) 0 }}
+      {{ $viewBoxParts := findRE `([0-9.]+)` $viewBoxMatch }}
+      {{ if ge (len $viewBoxParts) 4 }}
+        {{ $svgWidth = index $viewBoxParts 2 }}
+        {{ $svgHeight = index $viewBoxParts 3 }}
+      {{ end }}
+    {{ else }}
+      {{ if findRE $widthRegex $content }}
+        {{ $widthMatch := index (findRE $widthRegex $content) 0 }}
+        {{ $svgWidth = index (findRE `([0-9.]+)` $widthMatch) 0 }}
+      {{ end }}
+      {{ if findRE $heightRegex $content }}
+        {{ $heightMatch := index (findRE $heightRegex $content) 0 }}
+        {{ $svgHeight = index (findRE `([0-9.]+)` $heightMatch) 0 }}
+      {{ end }}
+    {{ end }}
+  {{ end }}
+{{ end }}
 
 {{/* Use the computed classes on the rendered figure */}}
 <figure class="{{ $classes }}">
 
-    <div class="img-container" {{ with $imgResource }}style="--w: {{ .Width }}; --h: {{ .Height }};"{{ end }}>
-        <img loading="lazy" alt="{{ .Text }}" src="{{ $url }}" {{ with $imgResource }}width="{{ .Width }}" height="{{ .Height }}"{{ end }}>
+    <div class="img-container" {{ with $imgResource }}{{ if ne .MediaType.SubType "svg" }}style="--w: {{ .Width }}; --h: {{ .Height }};"{{ else }}{{ if and $svgWidth $svgHeight }}style="--w: {{ $svgWidth }}; --h: {{ $svgHeight }};"{{ end }}{{ end }}{{ end }}>
+        <img loading="lazy" alt="{{ .Text }}" src="{{ $url }}" {{ with $imgResource }}{{ if ne .MediaType.SubType "svg" }}width="{{ .Width }}" height="{{ .Height }}"{{ else }}{{ if and $svgWidth $svgHeight }}width="{{ $svgWidth }}" height="{{ $svgHeight }}"{{ end }}{{ end }}{{ end }}>
     </div>
 
     {{ with .Title }}
