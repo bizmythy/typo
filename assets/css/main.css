@@ -498,6 +498,22 @@ figure {
   display: none !important;
 }
 
+.img-medium div {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.img-medium img {
+  max-height: calc(var(--figure-img-max-height) * 0.8);
+}
+
+.img-medium div:first-child {
+  height: 80%;
+  width: 80%;
+  margin: auto;
+}
+
 .img-small div {
   display: flex;
   align-items: center;
@@ -505,12 +521,12 @@ figure {
 }
 
 .img-small img {
-  max-height: calc(var(--figure-img-max-height) * 0.8);
+  max-height: calc(var(--figure-img-max-height) * 0.4);
 }
 
 .img-small div:first-child {
-  height: 80%;
-  width: 80%;
+  height: 40%;
+  width: 40%;
   margin: auto;
 }
 
